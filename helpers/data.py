@@ -12,12 +12,12 @@ def _smooth_returns(returns, window=10):
     return output
 
 
-def _plot_series(series, color, label):
+def _plot_series(series, color, label, smooth_window=10):
     series = np.array(series)
 
     if series.ndim == 1:
         plt.plot(series, color=color, linewidth=0.5)
-        plt.plot(_smooth_returns(series), color=color, label=label, linewidth=2)
+        plt.plot(_smooth_returns(series, window=smooth_window), color=color, label=label, linewidth=2)
     else:
         mean = series.mean(axis=0)
         plt.plot(mean, color=color, linewidth=1, label=label)
@@ -44,7 +44,7 @@ def random(env, n_episodes=1000):
     return returns
 
 
-def report(returns, render=True, legend_loc='upper right'):
+def report(returns, render=True, legend_loc='upper right', smooth_window=10):
     for i in range(len(returns)):
         series, color, label = returns[i]
 
@@ -59,7 +59,7 @@ def report(returns, render=True, legend_loc='upper right'):
         if not render:
             continue
 
-        _plot_series(series, color=color, label=label)
+        _plot_series(series, color=color, label=label, smooth_window=smooth_window)
 
     if not render:
         return
