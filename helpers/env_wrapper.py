@@ -44,7 +44,7 @@ class EnvironmentWrapper:
                         (1 / self._n_samples) * np.square(sample - self._mean)
             self._mean += (sample - self._mean) / self._n_samples
 
-    def _normalize(self, state):
+    def _standardize(self, state):
         if self._mean is None or self._std is None:
             return state
 
@@ -64,9 +64,9 @@ class EnvironmentWrapper:
     def reset(self):
         state = self._env.reset()
         self._update_env_stats(state)
-        return self._normalize(state)
+        return self._standardize(state)
 
     def step(self, action):
         state, reward, done, info = self._env.step(action)
         self._update_env_stats(state)
-        return self._normalize(state), reward, done, info
+        return self._standardize(state), reward, done, info
