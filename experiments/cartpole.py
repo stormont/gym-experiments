@@ -124,7 +124,7 @@ def run_multiple_trials():
     for i in range(n_trials):
         baseline_returns.append(data_exploration(env, n_episodes))
 
-    data.report([(baseline_returns, 'r', 'Baseline')])
+    data.report([(baseline_returns, 'b', 'Baseline')])
 
     basic_dqn_returns = []
 
