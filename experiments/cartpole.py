@@ -11,6 +11,7 @@ from keras.models import Sequential
 from keras.optimizers import Adam
 import gym
 import numpy as np
+import sys
 
 
 def build_network(env, verbose=True):
@@ -202,9 +203,17 @@ CartPole solved!
 
 
 def main():
-    run_single_trials()
-    # run_multiple_trials()
-    # solve()
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+    else:
+        arg = 'single'
+
+    if arg == 'multiple':
+        run_multiple_trials()
+    elif arg == 'solve':
+        solve()
+    else:
+        run_single_trials()
 
 
 if __name__ == "__main__":
