@@ -5,11 +5,12 @@ from algorithms.fixed_q_target import FixedQTarget
 from helpers.env_wrapper import EnvironmentWrapper
 from algorithms.experience import ExperienceReplay
 from helpers import data
+from helpers.model import ModelWrapper
 from keras.layers import Dense
 from keras.models import Sequential
 from keras.optimizers import Adam
 import gym
-from helpers.model import ModelWrapper
+import numpy as np
 
 
 def build_network(env, verbose=True):
@@ -25,16 +26,27 @@ def build_network(env, verbose=True):
     return ModelWrapper(model)
 
 
-def train_dqn(agent, n_episodes):
+def train_dqn(agent, n_episodes=None):
     exp_returns = []
+    training_complete = False
+    e = 0
 
-    for e in range(n_episodes):
+    # Arbitrary maximum at 3000 episodes, in case of divergent training
+    while not training_complete and e < 3000:
+        e += 1
         total_reward, n_steps, elapsed_time = agent.train()
         exp_returns.append(total_reward)
 
         print('Episode {} took {} steps and got {} reward in {} seconds; epsilon now {}'.format(
-            e+1, n_steps, total_reward, elapsed_time, agent.exploration.epsilon))
+            e, n_steps, total_reward, elapsed_time, agent.exploration.epsilon))
 
+        if n_episodes is not None:
+            training_complete = e == n_episodes
+        else:
+            # CartPole-v0 defines "solving" as getting average reward of 195.0 over 100 consecutive trials.
+            training_complete = np.mean(exp_returns[-100:]) >= 195
+
+    print('Training complete after {} episodes'.format(e))
     return exp_returns
 
 
@@ -70,7 +82,7 @@ def basic_dqn_with_experience(env, n_episodes):
     return train_dqn(agent, n_episodes)
 
 
-def basic_dqn_with_fixed_targets(env, n_episodes):
+def basic_dqn_with_fixed_targets(env, n_episodes=None):
     # Basic DQN with e-greedy exploration, experience replay, and fixed-Q targets
     model = build_network(env)
     target_model = build_network(env)
@@ -161,9 +173,28 @@ def run_multiple_trials():
                  (baseline_returns, 'r', 'Baseline')])
 
 
+def solve():
+    env = EnvironmentWrapper(gym.make('CartPole-v1'))
+    n_episodes = []
+
+    for i in range(10):
+        returns = basic_dqn_with_fixed_targets(env, n_episodes=None)
+        n_episodes.append(len(returns))
+
+    n_episodes = np.array(n_episodes)
+    print('CartPole solved!')
+    print('  Median: {} episodes'.format(np.median(n_episodes)))
+    print('  Mean:   {} episodes'.format(np.mean(n_episodes)))
+    print('  Std:    {} episodes'.format(np.std(n_episodes)))
+    print('  Min:    {} episodes'.format(np.min(n_episodes)))
+    print('  Max:    {} episodes'.format(np.max(n_episodes)))
+    print('  % diverged: {}'.format(len(n_episodes[n_episodes == 3000]) / float(len(n_episodes))))
+
+
 def main():
-    run_single_trials()
+    # run_single_trials()
     # run_multiple_trials()
+    solve()
 
 
 if __name__ == "__main__":
