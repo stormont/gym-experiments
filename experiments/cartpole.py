@@ -93,7 +93,7 @@ def run_single_trials():
     n_episodes = 500
 
     baseline_returns = data_exploration(env, n_episodes)
-    data.report([(baseline_returns, 'r', 'Baseline')])
+    data.report([(baseline_returns, 'b', 'Baseline')])
 
     basic_dqn_returns = basic_dqn(env, n_episodes)
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
