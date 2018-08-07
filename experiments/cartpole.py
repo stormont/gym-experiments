@@ -89,6 +89,10 @@ def basic_dqn_with_fixed_targets(env, n_episodes):
 
 
 def run_single_trials():
+    # Experiment described by: https://github.com/openai/gym/wiki/CartPole-v0
+    # CartPole-v0 defines "solving" as getting average reward of 195.0 over 100 consecutive trials.
+    # This environment corresponds to the version of the cart-pole problem described by
+    # Barto, Sutton, and Anderson [Barto83].
     env = EnvironmentWrapper(gym.make('CartPole-v1'))
     n_episodes = 500
 
