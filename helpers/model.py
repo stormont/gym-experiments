@@ -11,5 +11,11 @@ class ModelWrapper:
     def fit(self, states, predictions):
         return self._model.fit(states, predictions, epochs=1, verbose=0, batch_size=self._fit_batch_size)
 
+    def get_weights(self):
+        return self._model.get_weights()
+
     def predict(self, state):
         return self._model.predict(state)
+
+    def set_weights(self, weights):
+        self._model.set_weights(weights)

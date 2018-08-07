@@ -4,12 +4,16 @@ import time
 
 
 class DQNAgent:
-    def __init__(self, env, model, gamma, exploration, experience=None):
+    def __init__(self, env, model, gamma, exploration, experience=None, fixed_q_target=None):
         self._env = env
         self._model = model
         self._gamma = gamma
         self._exploration = exploration
         self._experience = experience
+        self._fixed_q_target = fixed_q_target
+
+        if self._fixed_q_target is not None:
+            self._fixed_q_target.reset(self._model)
 
     @property
     def exploration(self):
@@ -20,7 +24,11 @@ class DQNAgent:
         predictions = np.zeros((len(states), self._model.action_size))
 
         action_returns = self._model.predict(states)
-        next_action_returns = self._model.predict(next_states)
+
+        if self._fixed_q_target is not None:
+            next_action_returns = self._fixed_q_target.predict(next_states)
+        else:
+            next_action_returns = self._model.predict(next_states)
 
         for idx in range(len(states)):
             action, reward, done, action_return = actions[idx], rewards[idx], dones[idx], action_returns[idx]
@@ -59,6 +67,9 @@ class DQNAgent:
             else:
                 samples = self._vanilla_dqn(state, action, reward, next_state, done)
 
+            if self._fixed_q_target is not None:
+                self._fixed_q_target.step(self._model)
+
             predictions = self._get_predictions(samples)
             self._model.fit(samples[0], predictions)  # The first element of the `samples` tuple is `states`
 
@@ -67,5 +78,6 @@ class DQNAgent:
             n_steps += 1
 
         self._exploration.step()
+
         elapsed_time = time.time() - start_time
         return total_reward, n_steps, elapsed_time
