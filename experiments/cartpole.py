@@ -88,7 +88,7 @@ def basic_dqn_with_fixed_targets(env, n_episodes):
     return train_dqn(agent, n_episodes)
 
 
-def main():
+def run_single_trials():
     env = EnvironmentWrapper(gym.make('CartPole-v1'))
     n_episodes = 500
 
@@ -112,6 +112,54 @@ def main():
                  (basic_dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (basic_dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (baseline_returns, 'r', 'Baseline')])
+
+
+def run_multiple_trials():
+    env = EnvironmentWrapper(gym.make('CartPole-v1'))
+    n_episodes = 500
+    n_trials = 10
+
+    baseline_returns = []
+
+    for i in range(n_trials):
+        baseline_returns.append(data_exploration(env, n_episodes))
+
+    data.report([(baseline_returns, 'r', 'Baseline')])
+
+    basic_dqn_returns = []
+
+    for i in range(n_trials):
+        basic_dqn_returns.append(basic_dqn(env, n_episodes))
+
+    data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
+                 (baseline_returns, 'r', 'Baseline')])
+
+    basic_dqn_w_exp_returns = []
+
+    for i in range(n_trials):
+        basic_dqn_w_exp_returns.append(basic_dqn_with_experience(env, n_episodes))
+
+    data.report([(basic_dqn_w_exp_returns, 'b', 'DQN w/ ER'),
+                 (baseline_returns, 'r', 'Baseline')])
+
+    basic_dqn_w_fixed_targets_returns = []
+
+    for i in range(n_trials):
+        basic_dqn_w_fixed_targets_returns.append(basic_dqn_with_fixed_targets(env, n_episodes))
+
+    data.report([(basic_dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
+                 (baseline_returns, 'r', 'Baseline')])
+
+    # Plot all the variations
+    data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
+                 (basic_dqn_w_exp_returns, 'g', 'DQN w/ ER'),
+                 (basic_dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
+                 (baseline_returns, 'r', 'Baseline')])
+
+
+def main():
+    run_single_trials()
+    # run_multiple_trials()
 
 
 if __name__ == "__main__":
