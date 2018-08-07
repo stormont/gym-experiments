@@ -190,11 +190,21 @@ def solve():
     print('  Max:    {} episodes'.format(np.max(n_episodes)))
     print('  % diverged: {}'.format(len(n_episodes[n_episodes == 3000]) / float(len(n_episodes))))
 
+    ''' Sample output:
+CartPole solved!
+  Median: 309.0 episodes
+  Mean:   422.3 episodes
+  Std:    241.73624055983004 episodes
+  Min:    239 episodes
+  Max:    1075 episodes
+  % diverged: 0.0
+    '''
+
 
 def main():
-    # run_single_trials()
+    run_single_trials()
     # run_multiple_trials()
-    solve()
+    # solve()
 
 
 if __name__ == "__main__":

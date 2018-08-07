@@ -1,11 +1,16 @@
 
 class FixedQTarget:
-    def __init__(self, target_model, target_update_step, use_soft_targets=False):
+    def __init__(self, target_model, target_update_step, use_soft_targets=False, use_double_q=False):
         self._target_model = target_model
         self._target_update_step = target_update_step
         self._use_soft_targets = use_soft_targets
         self._tau = 1.0 / self._target_update_step
         self._n_steps = 0
+        self._use_double_q = use_double_q
+
+    @property
+    def use_double_q(self):
+        return self._use_double_q
 
     def predict(self, states):
         return self._target_model.predict(states)

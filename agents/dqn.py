@@ -33,8 +33,15 @@ class DQNAgent:
         for idx in range(len(states)):
             action, reward, done, action_return = actions[idx], rewards[idx], dones[idx], action_returns[idx]
 
-            greedy_action = np.argmax(next_action_returns[idx])
+            # argmax_a q_hat(S', a, w')
+            if self._fixed_q_target is not None and self._fixed_q_target.use_double_q:
+                greedy_action = np.argmax(self._model.predict(next_states)[idx])
+            else:
+                greedy_action = np.argmax(next_action_returns[idx])
+
+            # gamma * q_hat(S', greedy_action, w')
             discounted_return = self._gamma * next_action_returns[idx][greedy_action] * (not done)
+            # R + gamma * q_hat(S', argmax_a q_hat(S', a, w), w')
             action_return[action] = reward + discounted_return
 
             predictions[idx] = action_return
