@@ -20,7 +20,7 @@ class DQNAgent:
         return self._exploration
 
     def _get_predictions(self, samples):
-        states, actions, rewards, next_states, dones = samples
+        states, actions, rewards, next_states, dones, sample_weights, sample_indices = samples
         predictions = np.zeros((len(states), self._model.action_size))
 
         action_returns = self._model.predict(states)
@@ -28,31 +28,47 @@ class DQNAgent:
 
         for idx in range(len(states)):
             action, reward, done, action_return = actions[idx], rewards[idx], dones[idx], action_returns[idx]
-            greedy_action = self._select_greedy_action(next_states, next_action_returns, idx)
-            discounted_return = self._gamma * next_action_returns[idx][greedy_action] * (not done)
+            policy_action = self._select_policy_action(next_states, next_action_returns, idx)
+            discounted_return = self._gamma * next_action_returns[idx][policy_action] * (not done)
             action_return[action] = reward + discounted_return
             predictions[idx] = action_return
 
-        return predictions
+            if self._experience is not None and self._experience.supports_prioritization:
+                importance, sample_idx = sample_weights[idx], sample_indices[idx]
+                td_error = action_return - self._model.predict([states[idx]])
+                self._experience.update_priority(sample_idx, td_error)
+
+        return predictions, sample_weights
 
     def _get_next_action_returns(self, next_states):
         if self._fixed_q_target is not None:
+            # Fixed-Q targets use next action returns from the target policy (off-policy)
             return self._fixed_q_target.predict(next_states)
         else:
+            # Get the next action returns from the on-policy model
             return self._model.predict(next_states)
 
     def _sample_experience(self, state, action, reward, next_state, done):
         if self._experience is not None:
-            self._experience.add(state, action, reward, next_state, done)
+            if self._experience.supports_prioritization:
+                action_return = reward + self._get_next_action_returns([next_state])
+                td_error = action_return - self._model.predict([state])
+            else:
+                td_error = None
+
+            self._experience.add(state, action, reward, next_state, done, td_error)
             return self._experience.sample()
+        else:
+            # This is a "vanilla" DQN
+            return np.array([state]), np.array([action]), np.array([reward]), np.array([next_state]), np.array([done]),\
+                   None, None
 
-        # Else, this is a "vanilla" DQN
-        return np.array([state]), np.array([action]), np.array([reward]), np.array([next_state]), np.array([done])
-
-    def _select_greedy_action(self, next_states, next_action_returns, sample_idx):
+    def _select_policy_action(self, next_states, next_action_returns, sample_idx):
         if self._fixed_q_target is not None and self._fixed_q_target.use_double_q:
+            # Double-Q selects the greedy action of the on-policy model (but evaluates it off-policy)
             return np.argmax(self._model.predict(next_states)[sample_idx])
         else:
+            # Select the greedy action from the action returns given
             return np.argmax(next_action_returns[sample_idx])
 
     def train(self, render=False):
@@ -73,12 +89,16 @@ class DQNAgent:
             if self._fixed_q_target is not None:
                 self._fixed_q_target.step(self._model)
 
-            predictions = self._get_predictions(samples)
-            self._model.fit(samples[0], predictions)  # The first element of the `samples` tuple is `states`
+            states = samples[0]
+            predictions, sample_weights = self._get_predictions(samples)
+            self._model.fit(states, predictions, sample_weight=sample_weights)
 
             state = next_state
             total_reward += reward
             n_steps += 1
+
+        if self._experience is not None:
+            self._experience.step()
 
         self._exploration.step()
 
