@@ -68,4 +68,7 @@ def report(returns, render=True, title=None, legend_loc='upper right', smooth_wi
         plt.title(title)
 
     plt.legend(loc=legend_loc)
+    plt.xlabel('Episode')
+    plt.ylabel('Reward')
     plt.show()
+

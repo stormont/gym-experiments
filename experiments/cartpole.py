@@ -28,12 +28,16 @@ def build_network(env, verbose=True):
 
 
 def train_dqn(agent, n_episodes=None):
+    # Experiment described by: https://github.com/openai/gym/wiki/CartPole-v0
+    # CartPole-v1 defines "solving" as getting average reward of 195.0 over 100 consecutive trials.
+    # This environment corresponds to the version of the cart-pole problem described by
+    # Barto, Sutton, and Anderson [Barto83].
     exp_returns = []
     training_complete = False
     e = 0
 
-    # Arbitrary maximum at 3000 episodes, in case of divergent training
-    while not training_complete and e < 3000:
+    # Arbitrary maximum at 2000 episodes, in case of divergent training
+    while not training_complete and e < 2000:
         e += 1
         total_reward, n_steps, elapsed_time = agent.train()
         exp_returns.append(total_reward)
@@ -102,10 +106,6 @@ def basic_dqn_with_fixed_targets(env, n_episodes=None):
 
 
 def run_single_trials():
-    # Experiment described by: https://github.com/openai/gym/wiki/CartPole-v0
-    # CartPole-v1 defines "solving" as getting average reward of 195.0 over 100 consecutive trials.
-    # This environment corresponds to the version of the cart-pole problem described by
-    # Barto, Sutton, and Anderson [Barto83].
     env = EnvironmentWrapper(gym.make('CartPole-v1'))
     n_episodes = 500
 
@@ -189,7 +189,7 @@ def solve():
     print('  Std:    {} episodes'.format(np.std(n_episodes)))
     print('  Min:    {} episodes'.format(np.min(n_episodes)))
     print('  Max:    {} episodes'.format(np.max(n_episodes)))
-    print('  % diverged: {}'.format(len(n_episodes[n_episodes == 3000]) / float(len(n_episodes))))
+    print('  % diverged: {}'.format(len(n_episodes[n_episodes >= 2000]) / float(len(n_episodes))))
 
     ''' Sample output:
 CartPole solved!
