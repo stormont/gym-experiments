@@ -24,35 +24,36 @@ class DQNAgent:
         predictions = np.zeros((len(states), self._model.action_size))
 
         action_returns = self._model.predict(states)
-
-        if self._fixed_q_target is not None:
-            next_action_returns = self._fixed_q_target.predict(next_states)
-        else:
-            next_action_returns = self._model.predict(next_states)
+        next_action_returns = self._get_next_action_returns(next_states)
 
         for idx in range(len(states)):
             action, reward, done, action_return = actions[idx], rewards[idx], dones[idx], action_returns[idx]
-
-            # argmax_a q_hat(S', a, w')
-            if self._fixed_q_target is not None and self._fixed_q_target.use_double_q:
-                greedy_action = np.argmax(self._model.predict(next_states)[idx])
-            else:
-                greedy_action = np.argmax(next_action_returns[idx])
-
-            # gamma * q_hat(S', greedy_action, w')
+            greedy_action = self._select_greedy_action(next_states, next_action_returns, idx)
             discounted_return = self._gamma * next_action_returns[idx][greedy_action] * (not done)
-            # R + gamma * q_hat(S', argmax_a q_hat(S', a, w), w')
             action_return[action] = reward + discounted_return
-
             predictions[idx] = action_return
 
         return predictions
 
-    def _sample_experience(self):
-        return self._experience.sample()
+    def _get_next_action_returns(self, next_states):
+        if self._fixed_q_target is not None:
+            return self._fixed_q_target.predict(next_states)
+        else:
+            return self._model.predict(next_states)
 
-    def _vanilla_dqn(self, state, action, reward, next_state, done):
+    def _sample_experience(self, state, action, reward, next_state, done):
+        if self._experience is not None:
+            self._experience.add(state, action, reward, next_state, done)
+            return self._experience.sample()
+
+        # Else, this is a "vanilla" DQN
         return np.array([state]), np.array([action]), np.array([reward]), np.array([next_state]), np.array([done])
+
+    def _select_greedy_action(self, next_states, next_action_returns, sample_idx):
+        if self._fixed_q_target is not None and self._fixed_q_target.use_double_q:
+            return np.argmax(self._model.predict(next_states)[sample_idx])
+        else:
+            return np.argmax(next_action_returns[sample_idx])
 
     def train(self, render=False):
         state = self._env.reset()
@@ -67,12 +68,7 @@ class DQNAgent:
 
             action = self._exploration.act(self._model, np.array([state]))
             next_state, reward, done, _ = self._env.step(action)
-
-            if self._experience is not None:
-                self._experience.add(state, action, reward, next_state, done)
-                samples = self._sample_experience()
-            else:
-                samples = self._vanilla_dqn(state, action, reward, next_state, done)
+            samples = self._sample_experience(state, action, reward, next_state, done)
 
             if self._fixed_q_target is not None:
                 self._fixed_q_target.step(self._model)
