@@ -98,7 +98,7 @@ class PrioritizedExperienceReplay(ExperienceReplay):
 
     def sample(self):
         num_samples = self.__len__()
-        dist = self._priorities.copy()
+        dist = np.array(list(self._priorities))
         sum_priorities = dist.sum()
         beta = 1.0 if self._beta_sched is None else self._beta_sched.value
         dist /= sum_priorities  # Normalize distribution

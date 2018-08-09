@@ -35,7 +35,7 @@ class DQNAgent:
 
             if self._experience is not None and self._experience.supports_prioritization:
                 importance, sample_idx = sample_weights[idx], sample_indices[idx]
-                td_error = action_return - self._model.predict([states[idx]])
+                td_error = (action_return - self._model.predict(np.array([states[idx]])))[0][action]
                 self._experience.update_priority(sample_idx, td_error)
 
         return predictions, sample_weights
@@ -51,8 +51,8 @@ class DQNAgent:
     def _sample_experience(self, state, action, reward, next_state, done):
         if self._experience is not None:
             if self._experience.supports_prioritization:
-                action_return = reward + self._get_next_action_returns([next_state])
-                td_error = action_return - self._model.predict([state])
+                action_return = reward + self._get_next_action_returns(np.array([next_state]))
+                td_error = (action_return - self._model.predict(np.array([state])))[0][action]
             else:
                 td_error = None
 
