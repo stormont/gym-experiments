@@ -71,8 +71,8 @@ def basic_dqn(env, n_episodes):
     return train_dqn(agent, n_episodes)
 
 
-def basic_dqn_with_experience(env, n_episodes):
-    # Basic DQN with e-greedy exploration and experience replay
+def dqn_with_experience(env, n_episodes):
+    # DQN with e-greedy exploration and experience replay
     model = build_network(env)
     experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
     exploration = ExponentialEpsilonGreedyExploration(epsilon_start=1.0, epsilon_min=0.01, epsilon_decay=0.99)
@@ -87,8 +87,8 @@ def basic_dqn_with_experience(env, n_episodes):
     return train_dqn(agent, n_episodes)
 
 
-def basic_dqn_with_fixed_targets(env, n_episodes=None):
-    # Basic DQN with e-greedy exploration, experience replay, and fixed-Q targets
+def dqn_with_fixed_targets(env, n_episodes=None):
+    # DQN with e-greedy exploration, experience replay, and fixed-Q targets
     model = build_network(env)
     target_model = build_network(env)
     experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
@@ -116,18 +116,18 @@ def run_single_trials():
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
                  (baseline_returns, 'r', 'Baseline')], title='Vanilla DQN')
 
-    basic_dqn_w_exp_returns = basic_dqn_with_experience(env, n_episodes)
-    data.report([(basic_dqn_w_exp_returns, 'b', 'DQN w/ ER'),
+    dqn_w_exp_returns = dqn_with_experience(env, n_episodes)
+    data.report([(dqn_w_exp_returns, 'b', 'DQN w/ ER'),
                  (baseline_returns, 'r', 'Baseline')], title='Experience Replay')
 
-    basic_dqn_w_fixed_targets_returns = basic_dqn_with_fixed_targets(env, n_episodes)
-    data.report([(basic_dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
+    dqn_w_fixed_targets_returns = dqn_with_fixed_targets(env, n_episodes)
+    data.report([(dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
                  (baseline_returns, 'r', 'Baseline')], title='Fixed-Q Targets')
 
     # Plot all the variations
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
-                 (basic_dqn_w_exp_returns, 'g', 'DQN w/ ER'),
-                 (basic_dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
+                 (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
+                 (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (baseline_returns, 'r', 'Baseline')], title='4 DQN Variants')
 
 
@@ -151,26 +151,26 @@ def run_multiple_trials():
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
                  (baseline_returns, 'r', 'Baseline')], title='Vanilla DQN')
 
-    basic_dqn_w_exp_returns = []
+    dqn_w_exp_returns = []
 
     for i in range(n_trials):
-        basic_dqn_w_exp_returns.append(basic_dqn_with_experience(env, n_episodes))
+        dqn_w_exp_returns.append(dqn_with_experience(env, n_episodes))
 
-    data.report([(basic_dqn_w_exp_returns, 'b', 'DQN w/ ER'),
+    data.report([(dqn_w_exp_returns, 'b', 'DQN w/ ER'),
                  (baseline_returns, 'r', 'Baseline')], title='Experience Replay')
 
-    basic_dqn_w_fixed_targets_returns = []
+    dqn_w_fixed_targets_returns = []
 
     for i in range(n_trials):
-        basic_dqn_w_fixed_targets_returns.append(basic_dqn_with_fixed_targets(env, n_episodes))
+        dqn_w_fixed_targets_returns.append(dqn_with_fixed_targets(env, n_episodes))
 
-    data.report([(basic_dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
+    data.report([(dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
                  (baseline_returns, 'r', 'Baseline')], title='Fixed-Q Targets')
 
     # Plot all the variations
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
-                 (basic_dqn_w_exp_returns, 'g', 'DQN w/ ER'),
-                 (basic_dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
+                 (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
+                 (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (baseline_returns, 'r', 'Baseline')], title='4 DQN Variants')
 
 
@@ -179,7 +179,7 @@ def solve():
     n_episodes = []
 
     for i in range(10):
-        returns = basic_dqn_with_fixed_targets(env, n_episodes=None)
+        returns = dqn_with_fixed_targets(env, n_episodes=None)
         n_episodes.append(len(returns))
 
     n_episodes = np.array(n_episodes)
