@@ -1,12 +1,11 @@
 
-from algorithms.schedule import ExponentialSchedule
 import numpy as np
 import random
 
 
-class ExponentialEpsilonGreedyExploration:
-    def __init__(self, epsilon_start, epsilon_min, epsilon_decay):
-        self._schedule = ExponentialSchedule(start=epsilon_start, end=epsilon_min, step=epsilon_decay)
+class EpsilonGreedyExploration:
+    def __init__(self, decay_sched):
+        self._schedule = decay_sched
 
     @property
     def epsilon(self):

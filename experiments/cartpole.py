@@ -1,7 +1,8 @@
 
 from agents.dqn import DQNAgent
-from algorithms.egreedy import ExponentialEpsilonGreedyExploration
+from algorithms.egreedy import EpsilonGreedyExploration
 from algorithms.fixed_q_target import FixedQTarget
+from algorithms.schedule import ExponentialSchedule
 from helpers.env_wrapper import EnvironmentWrapper
 from algorithms.experience import ExperienceReplay
 from helpers import data
@@ -64,7 +65,8 @@ def data_exploration(env, n_episodes):
 def basic_dqn(env, n_episodes):
     # Basic DQN with e-greedy exploration
     model = build_network(env)
-    exploration = ExponentialEpsilonGreedyExploration(epsilon_start=1.0, epsilon_min=0.01, epsilon_decay=0.99)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
+    exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration)
 
     # Perform the training
@@ -75,7 +77,8 @@ def dqn_with_experience(env, n_episodes):
     # DQN with e-greedy exploration and experience replay
     model = build_network(env)
     experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
-    exploration = ExponentialEpsilonGreedyExploration(epsilon_start=1.0, epsilon_min=0.01, epsilon_decay=0.99)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
+    exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience)
 
     # Pre-load samples in experience replay.
@@ -92,7 +95,8 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     model = build_network(env)
     target_model = build_network(env)
     experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
-    exploration = ExponentialEpsilonGreedyExploration(epsilon_start=1.0, epsilon_min=0.01, epsilon_decay=0.99)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
+    exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
