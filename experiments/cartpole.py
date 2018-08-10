@@ -40,7 +40,7 @@ def train_dqn(agent, n_episodes=None):
     # Arbitrary maximum at 2000 episodes, in case of divergent training
     while not training_complete and e < 2000:
         e += 1
-        total_reward, n_steps, elapsed_time = agent.train()
+        total_reward, n_steps, elapsed_time, _ = agent.train()
         exp_returns.append(total_reward)
 
         print('Episode {} took {} steps and got {} reward in {} seconds; epsilon now {}'.format(

@@ -25,6 +25,7 @@ class DQNAgent:
 
         action_returns = self._model.predict(states)
         next_action_returns = self._get_next_action_returns(next_states)
+        sampled_returns = []
 
         for idx in range(len(states)):
             action, reward, done, action_return = actions[idx], rewards[idx], dones[idx], action_returns[idx]
@@ -32,13 +33,14 @@ class DQNAgent:
             discounted_return = self._gamma * next_action_returns[idx][policy_action] * (not done)
             action_return[action] = reward + discounted_return
             predictions[idx] = action_return
+            sampled_returns.append(action_return)
 
             if self._experience is not None and self._experience.supports_prioritization:
                 importance, sample_idx = sample_weights[idx], sample_indices[idx]
                 td_error = (action_return - self._model.predict(np.array([states[idx]])))[0][action]
                 self._experience.update_priority(sample_idx, td_error)
 
-        return predictions, sample_weights
+        return predictions, sample_weights, sampled_returns
 
     def _get_next_action_returns(self, next_states):
         if self._fixed_q_target is not None:
@@ -77,6 +79,8 @@ class DQNAgent:
         done = False
         n_steps = 0
         start_time = time.time()
+        step_rewards = []
+        losses = []
 
         while not done:
             if render:
@@ -90,17 +94,22 @@ class DQNAgent:
                 self._fixed_q_target.step(self._model)
 
             states = samples[0]
-            predictions, sample_weights = self._get_predictions(samples)
-            self._model.fit(states, predictions, sample_weight=sample_weights)
+            predictions, sample_weights, sampled_returns = self._get_predictions(samples)
+            history = self._model.fit(states, predictions, sample_weight=sample_weights)
+            losses.extend(history.history['loss'])
 
             state = next_state
             total_reward += reward
             n_steps += 1
+            step_rewards.extend(sampled_returns)
 
         if self._experience is not None:
             self._experience.step()
 
         self._exploration.step()
 
+        if self._fixed_q_target is not None:
+            self._model = self._fixed_q_target.swap_models(self._model)
+
         elapsed_time = time.time() - start_time
-        return total_reward, n_steps, elapsed_time
+        return total_reward, n_steps, elapsed_time, np.mean(step_rewards), np.mean(losses)

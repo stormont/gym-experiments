@@ -2,6 +2,7 @@
 from agents.dqn import DQNAgent
 from algorithms.egreedy import EpsilonGreedyExploration
 from algorithms.fixed_q_target import FixedQTarget
+from algorithms.loss import huber_loss
 from helpers.env_wrapper import EnvironmentWrapper
 from algorithms.experience import ExperienceReplay
 from algorithms.schedule import ExponentialSchedule
@@ -20,7 +21,7 @@ def build_network(env, verbose=True):
     model.add(Dense(24, input_dim=env.observation_space.shape[0], activation='relu'))
     model.add(Dense(24, activation='relu'))
     model.add(Dense(env.action_space.n, activation='linear'))
-    model.compile(loss='mse', optimizer=Adam(lr=0.001))
+    model.compile(loss=huber_loss, optimizer=Adam(lr=0.001))
 
     if verbose:
         model.summary()
@@ -39,11 +40,11 @@ def train_dqn(agent, n_episodes=None):
     # Arbitrary maximum at 2000 episodes, in case of divergent training
     while not training_complete and e < 2000:
         e += 1
-        total_reward, n_steps, elapsed_time = agent.train()
+        total_reward, n_steps, elapsed_time, ep_reward_est_max, ep_loss_max = agent.train()
         exp_returns.append(total_reward)
 
-        print('Episode {} took {} steps and got {} reward in {} seconds; epsilon now {}'.format(
-            e, n_steps, total_reward, elapsed_time, agent.exploration.epsilon))
+        print('Episode {} took {} steps and got {} reward in {} seconds (mean return estimate {}, mean loss {}); epsilon now {}'.format(
+            e, n_steps, total_reward, elapsed_time, ep_reward_est_max, ep_loss_max, agent.exploration.epsilon))
 
         if n_episodes is not None:
             training_complete = e == n_episodes
@@ -75,7 +76,7 @@ def basic_dqn(env, n_episodes):
 def dqn_with_experience(env, n_episodes):
     # DQN with e-greedy exploration and experience replay
     model = build_network(env)
-    experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
+    experience = ExperienceReplay(maxlen=20000, sample_batch_size=32, min_size_to_sample=1000)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience)
@@ -93,7 +94,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     # DQN with e-greedy exploration, experience replay, and fixed-Q targets
     model = build_network(env)
     target_model = build_network(env)
-    experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
+    experience = ExperienceReplay(maxlen=20000, sample_batch_size=32, min_size_to_sample=1000)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
@@ -112,7 +113,7 @@ def dqn_with_prioritized_experience(env, n_episodes=None):
     # DQN with e-greedy exploration, experience replay, and fixed-Q targets
     model = build_network(env)
     target_model = build_network(env)
-    experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
+    experience = ExperienceReplay(maxlen=20000, sample_batch_size=32, min_size_to_sample=1000)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
@@ -215,7 +216,7 @@ def solve():
     n_episodes = []
 
     for i in range(10):
-        returns = dqn_with_fixed_targets(env, n_episodes=None)
+        returns = dqn_with_prioritized_experience(env, n_episodes=None)
         n_episodes.append(len(returns))
 
     n_episodes = np.array(n_episodes)
