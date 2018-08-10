@@ -89,7 +89,7 @@ def basic_dqn(env, n_episodes):
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration)
 
     # Perform the training
-    return train_dqn(agent, n_episodes)
+    return train_dqn(agent, n_episodes, debug=n_episodes is None)
 
 
 def dqn_with_experience(env, n_episodes):
@@ -106,7 +106,7 @@ def dqn_with_experience(env, n_episodes):
     experience.bootstrap(env)
 
     # Perform the training
-    return train_dqn(agent, n_episodes)
+    return train_dqn(agent, n_episodes, debug=n_episodes is None)
 
 
 def dqn_with_fixed_targets(env, n_episodes=None):
