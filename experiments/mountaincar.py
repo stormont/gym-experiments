@@ -97,7 +97,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
-    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
+    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
     # Pre-load samples in experience replay.
@@ -119,7 +119,7 @@ def dqn_with_prioritized_experience(env, n_episodes=None):
                                              alpha_sched=alpha_sched, beta_sched=beta_sched)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
-    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
+    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
     # Pre-load samples in experience replay.
@@ -246,7 +246,7 @@ def main():
     if len(sys.argv) > 1:
         arg = sys.argv[1]
     else:
-        arg = 'single'
+        arg = 'solve'
 
     if arg == 'multiple':
         run_multiple_trials()
