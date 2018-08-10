@@ -1,16 +1,17 @@
 
 from agents.dqn import DQNAgent
 from algorithms.egreedy import EpsilonGreedyExploration
+from algorithms.experience import ExperienceReplay
 from algorithms.fixed_q_target import FixedQTarget
 from algorithms.schedule import ExponentialSchedule
+import gym
 from helpers.env_wrapper import EnvironmentWrapper
-from algorithms.experience import ExperienceReplay
 from helpers import data
 from helpers.model import ModelWrapper
 from keras.layers import Dense
 from keras.models import Sequential
 from keras.optimizers import Adam
-import gym
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
@@ -28,7 +29,7 @@ def build_network(env, verbose=True):
     return ModelWrapper(model)
 
 
-def train_dqn(agent, n_episodes=None):
+def train_dqn(agent, n_episodes=None, debug=False):
     # Experiment described by: https://github.com/openai/gym/wiki/CartPole-v0
     # CartPole-v1 defines "solving" as getting average reward of 195.0 over 100 consecutive trials.
     # This environment corresponds to the version of the cart-pole problem described by
@@ -36,11 +37,19 @@ def train_dqn(agent, n_episodes=None):
     exp_returns = []
     training_complete = False
     e = 0
+    action_vals = []
+
+    def debug_func(model):
+        # Just an arbitrary first state/action pair from a new episode of a fully trained model
+        state = np.array([[0.3604471, 0.21131558, 5.13830467, 0.07171951]])
+        action = 0
+        x = model.predict(state)[0][action]
+        action_vals.append(x)
 
     # Arbitrary maximum at 2000 episodes, in case of divergent training
     while not training_complete and e < 2000:
         e += 1
-        total_reward, n_steps, elapsed_time, _, _ = agent.train()
+        total_reward, n_steps, elapsed_time, _, _ = agent.train(debug_func=debug_func if debug else None)
         exp_returns.append(total_reward)
 
         print('Episode {} took {} steps and got {} reward in {} seconds; epsilon now {}'.format(
@@ -53,6 +62,11 @@ def train_dqn(agent, n_episodes=None):
             training_complete = np.mean(exp_returns[-100:]) >= 195
 
     print('Training complete after {} episodes'.format(e))
+
+    plt.plot(exp_returns, color='b', label='Rewards')
+    plt.plot(action_vals, color='r', label='Q-value')
+    plt.legend(loc='upper left')
+    plt.show()
 
     if n_episodes is None:
         step_rewards, n_steps = agent.test(render=True, verbose=1)
@@ -111,7 +125,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     experience.bootstrap(env)
 
     # Perform the training
-    return train_dqn(agent, n_episodes)
+    return train_dqn(agent, n_episodes, debug=n_episodes is None)
 
 
 def run_single_trials():

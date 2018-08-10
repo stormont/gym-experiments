@@ -76,7 +76,7 @@ class DQNAgent:
             # Select the greedy action from the action returns given
             return np.argmax(next_action_returns[sample_idx])
 
-    def train(self, render=False):
+    def train(self, render=False, debug_func=None):
         state = self._env.reset()
         total_reward = 0
         done = False
@@ -110,6 +110,10 @@ class DQNAgent:
             self._experience.step()
 
         self._exploration.step()
+
+        # Allow the chance to examine the model for debugging
+        if debug_func is not None:
+            debug_func(self._model)
 
         # The Hasselt 2010 algorithm calls for swapping models each update step, but combined with Fixed-Q targets,
         # the model swapping seems to work better after each episode, rather than each update step.
