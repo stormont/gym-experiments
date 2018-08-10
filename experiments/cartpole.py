@@ -140,7 +140,11 @@ def run_multiple_trials():
     n_episodes = 500
     n_trials = 10
 
-    baseline_returns = data_exploration(env, n_episodes)
+    baseline_returns = []
+
+    for i in range(n_trials):
+        baseline_returns.append(data_exploration(env, n_episodes))
+
     data.report([(baseline_returns, 'b', 'Baseline')], title='Random Walk')
 
     basic_dqn_returns = []
