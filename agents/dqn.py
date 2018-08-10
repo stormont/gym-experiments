@@ -118,3 +118,28 @@ class DQNAgent:
 
         elapsed_time = time.time() - start_time
         return total_reward, n_steps, elapsed_time, np.mean(step_rewards), np.mean(losses)
+
+    def test(self, render=False, verbose=0):
+        state = self._env.reset()
+        total_reward = 0
+        done = False
+        n_steps = 0
+        step_rewards = []
+
+        while not done:
+            if render:
+                self._env.render()
+
+            # Act greedily during testing
+            action = np.argmax(self._model.predict(np.array([state]))[0])
+            next_state, reward, done, _ = self._env.step(action)
+
+            if verbose > 0:
+                print('Step {}: reward {}, state {}, action {}'.format(n_steps, reward, state, action))
+
+            state = next_state
+            total_reward += reward
+            n_steps += 1
+            step_rewards.append(reward)
+
+        return step_rewards, n_steps
