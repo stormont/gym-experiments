@@ -108,6 +108,8 @@ class DQNAgent:
 
         self._exploration.step()
 
+        # The Hasselt 2010 algorithm calls for swapping models each update step, but combined with Fixed-Q targets,
+        # the model swapping seems to work better after each episode, rather than each update step.
         if self._fixed_q_target is not None:
             self._model = self._fixed_q_target.swap_models(self._model)
 
