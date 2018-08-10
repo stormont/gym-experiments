@@ -53,6 +53,9 @@ class DQNAgent:
     def _sample_experience(self, state, action, reward, next_state, done):
         if self._experience is not None:
             if self._experience.supports_prioritization:
+                # Schaul 2015 says that incoming samples have no known error, but this seems incorrect; it seems
+                # we can estimate the sample's TD error upon arrival.
+                # Jaromir Janisch makes the same conclusion; see: https://jaromiru.com/2016/11/07/lets-make-a-dqn-double-learning-and-prioritized-experience-replay/
                 action_return = reward + self._get_next_action_returns(np.array([next_state]))
                 td_error = (action_return - self._model.predict(np.array([state])))[0][action]
             else:
