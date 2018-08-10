@@ -162,7 +162,7 @@ def run_single_trials():
 def run_multiple_trials():
     env = EnvironmentWrapper(gym.make('MountainCar-v0'))
     n_episodes = 500
-    n_trials = 5
+    n_trials = 10
 
     baseline_returns = []
 
