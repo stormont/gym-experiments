@@ -56,7 +56,7 @@ def train_dqn(agent, n_episodes=None):
 
     if n_episodes is None:
         step_rewards, n_steps = agent.test(render=True, verbose=1)
-        print('Testing: {} total reward over {} steps'.format(step_rewards.sum(), n_steps))
+        print('Testing: {} total reward over {} steps'.format(np.sum(step_rewards), n_steps))
 
     return exp_returns
 
