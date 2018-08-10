@@ -4,8 +4,8 @@ from algorithms.egreedy import EpsilonGreedyExploration
 from algorithms.fixed_q_target import FixedQTarget
 from algorithms.loss import huber_loss
 from helpers.env_wrapper import EnvironmentWrapper
-from algorithms.experience import ExperienceReplay
-from algorithms.schedule import ExponentialSchedule
+from algorithms.experience import ExperienceReplay, PrioritizedExperienceReplay
+from algorithms.schedule import ExponentialSchedule, LinearSchedule
 from helpers import data
 from helpers.model import ModelWrapper
 from keras.layers import Dense
@@ -76,7 +76,7 @@ def basic_dqn(env, n_episodes):
 def dqn_with_experience(env, n_episodes):
     # DQN with e-greedy exploration and experience replay
     model = build_network(env)
-    experience = ExperienceReplay(maxlen=20000, sample_batch_size=32, min_size_to_sample=1000)
+    experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience)
@@ -94,10 +94,10 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     # DQN with e-greedy exploration, experience replay, and fixed-Q targets
     model = build_network(env)
     target_model = build_network(env)
-    experience = ExperienceReplay(maxlen=20000, sample_batch_size=32, min_size_to_sample=1000)
+    experience = ExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
-    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
+    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
     # Pre-load samples in experience replay.
@@ -113,10 +113,13 @@ def dqn_with_prioritized_experience(env, n_episodes=None):
     # DQN with e-greedy exploration, experience replay, and fixed-Q targets
     model = build_network(env)
     target_model = build_network(env)
-    experience = ExperienceReplay(maxlen=20000, sample_batch_size=32, min_size_to_sample=1000)
+    alpha_sched = LinearSchedule(start=0.0, end=1.0, step=0.002)
+    beta_sched = LinearSchedule(start=0.0, end=1.0, step=0.002)
+    experience = PrioritizedExperienceReplay(maxlen=2000, sample_batch_size=32, min_size_to_sample=100,
+                                             alpha_sched=alpha_sched, beta_sched=beta_sched)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
-    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
+    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
     # Pre-load samples in experience replay.
