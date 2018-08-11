@@ -1,17 +1,18 @@
 
 from agents.dqn import DQNAgent
 from algorithms.egreedy import EpsilonGreedyExploration
+from algorithms.experience import ExperienceReplay, PrioritizedExperienceReplay
 from algorithms.fixed_q_target import FixedQTarget
 from algorithms.loss import huber_loss
-from helpers.env_wrapper import EnvironmentWrapper
-from algorithms.experience import ExperienceReplay, PrioritizedExperienceReplay
 from algorithms.schedule import ExponentialSchedule, LinearSchedule
+import gym
 from helpers import data
+from helpers.env_wrapper import EnvironmentWrapper
 from helpers.model import ModelWrapper
 from keras.layers import Dense
 from keras.models import Sequential
 from keras.optimizers import Adam
-import gym
+import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
@@ -29,18 +30,26 @@ def build_network(env, verbose=True):
     return ModelWrapper(model)
 
 
-def train_dqn(agent, n_episodes=None):
+def train_dqn(agent, n_episodes=None, debug=False):
     # Experiment described by: https://github.com/openai/gym/wiki/MountainCarContinuous-v0
     # MountainCar-v0 defines "solving" as getting average reward of -110.0 over 100 consecutive trials.
     # This problem was first described by Andrew Moore in his PhD thesis [Moore90].
     exp_returns = []
     training_complete = False
     e = 0
+    action_vals = []
+
+    def debug_func(model):
+        # Just an arbitrary first state/action pair from a new episode of a fully trained model
+        state = np.array([[9.03193631, 2.92284914]])
+        action = 0
+        x = model.predict(state)[0][action]
+        action_vals.append(x)
 
     # Arbitrary maximum at 2000 episodes, in case of divergent training
     while not training_complete and e < 2000:
         e += 1
-        total_reward, n_steps, elapsed_time, ep_reward_est_max, ep_loss_max = agent.train()
+        total_reward, n_steps, elapsed_time, ep_reward_est_max, ep_loss_max = agent.train(debug_func=debug_func if debug else None)
         exp_returns.append(total_reward)
 
         print('Episode {} took {} steps and got {} reward in {} seconds (mean return estimate {}, mean loss {}); epsilon now {}'.format(
@@ -51,6 +60,11 @@ def train_dqn(agent, n_episodes=None):
         else:
             # MountainCar-v0 defines "solving" as getting average reward of -110.0 over 100 consecutive trials.
             training_complete = np.mean(exp_returns[-100:]) >= -110
+
+    plt.plot(exp_returns, color='b', label='Rewards')
+    plt.plot(action_vals, color='r', label='Q-value')
+    plt.legend(loc='upper left')
+    plt.show()
 
     print('Training complete after {} episodes'.format(e))
     return exp_returns
@@ -70,7 +84,7 @@ def basic_dqn(env, n_episodes):
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration)
 
     # Perform the training
-    return train_dqn(agent, n_episodes)
+    return train_dqn(agent, n_episodes, debug=True)
 
 
 def dqn_with_experience(env, n_episodes):
@@ -87,7 +101,7 @@ def dqn_with_experience(env, n_episodes):
     experience.bootstrap(env)
 
     # Perform the training
-    return train_dqn(agent, n_episodes)
+    return train_dqn(agent, n_episodes, debug=True)
 
 
 def dqn_with_fixed_targets(env, n_episodes=None):
@@ -106,7 +120,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     experience.bootstrap(env)
 
     # Perform the training
-    return train_dqn(agent, n_episodes)
+    return train_dqn(agent, n_episodes, debug=True)
 
 
 def dqn_with_prioritized_experience(env, n_episodes=None):
@@ -246,7 +260,7 @@ def main():
     if len(sys.argv) > 1:
         arg = sys.argv[1]
     else:
-        arg = 'solve'
+        arg = 'single'
 
     if arg == 'multiple':
         run_multiple_trials()

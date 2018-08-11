@@ -5,8 +5,8 @@ from algorithms.experience import ExperienceReplay
 from algorithms.fixed_q_target import FixedQTarget
 from algorithms.schedule import ExponentialSchedule
 import gym
-from helpers.env_wrapper import EnvironmentWrapper
 from helpers import data
+from helpers.env_wrapper import EnvironmentWrapper
 from helpers.model import ModelWrapper
 from keras.layers import Dense
 from keras.models import Sequential
