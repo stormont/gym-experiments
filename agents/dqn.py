@@ -4,13 +4,14 @@ import time
 
 
 class DQNAgent:
-    def __init__(self, env, model, gamma, exploration, experience=None, fixed_q_target=None):
+    def __init__(self, env, model, gamma, exploration, experience=None, fixed_q_target=None, n_steps=1):
         self._env = env
         self._model = model
         self._gamma = gamma
         self._exploration = exploration
         self._experience = experience
         self._fixed_q_target = fixed_q_target
+        self._n_steps = n_steps
 
         if self._fixed_q_target is not None:
             self._fixed_q_target.reset(self._model)
@@ -76,6 +77,32 @@ class DQNAgent:
             # Select the greedy action from the action returns given
             return np.argmax(next_action_returns[sample_idx])
 
+    def _do_n_steps(self, action):
+        next_state = None
+        reward = 0
+        done = False
+        step_action = action
+
+        for i in range(self._n_steps):
+            step_next_state, step_reward, step_done, _ = self._env.step(step_action)
+            reward += step_reward * (self._gamma ** i)
+
+            if next_state is None:
+                # Just store the "first" next state when using multiple N-steps
+                next_state = step_next_state
+
+            if done is None:
+                # Just store the "first" done when using multiple N-steps
+                done = step_done
+
+            if step_done:
+                break
+
+            # Get the greedy action using the on-policy model
+            step_action = np.argmax(self._model.predict(np.array([next_state]))[0])
+
+        return next_state, reward, done, dict()
+
     def train(self, render=False, debug_func=None):
         state = self._env.reset()
         total_reward = 0
@@ -90,6 +117,7 @@ class DQNAgent:
                 self._env.render()
 
             action = self._exploration.act(self._model, np.array([state]))
+            # next_state, reward, done, _ = self._do_n_steps(action)
             next_state, reward, done, _ = self._env.step(action)
             samples = self._sample_experience(state, action, reward, next_state, done)
 
@@ -100,6 +128,11 @@ class DQNAgent:
             predictions, sample_weights, sampled_returns = self._get_predictions(samples)
             history = self._model.fit(states, predictions, sample_weight=sample_weights)
             losses.extend(history.history['loss'])
+
+            # The Hasselt 2010 algorithm calls for randomly swapping models each update step.
+            # This isn't seen much in DQN implementations, but seems more theoretically sound.
+            if self._fixed_q_target is not None:
+                self._model = self._fixed_q_target.swap_models(self._model)
 
             state = next_state
             total_reward += reward
@@ -114,11 +147,6 @@ class DQNAgent:
         # Allow the chance to examine the model for debugging
         if debug_func is not None:
             debug_func(self._model)
-
-        # The Hasselt 2010 algorithm calls for swapping models each update step, but combined with Fixed-Q targets,
-        # the model swapping seems to work better after each episode, rather than each update step.
-        if self._fixed_q_target is not None:
-            self._model = self._fixed_q_target.swap_models(self._model)
 
         elapsed_time = time.time() - start_time
         return total_reward, n_steps, elapsed_time, np.mean(step_rewards), np.mean(losses)

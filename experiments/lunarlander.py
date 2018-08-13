@@ -60,10 +60,11 @@ def train_dqn(agent, n_episodes=None, debug=False):
             # MountainCar-v0 defines "solving" as getting average reward of 200.0 over 100 consecutive trials.
             training_complete = np.mean(exp_returns[-100:]) >= 200
 
-    plt.plot(exp_returns, color='b', label='Rewards')
-    plt.plot(action_vals, color='r', label='Q-value')
-    plt.legend(loc='upper left')
-    plt.show()
+    if debug:
+        plt.plot(exp_returns, color='b', label='Rewards')
+        plt.plot(action_vals, color='r', label='Q-value')
+        plt.legend(loc='upper left')
+        plt.show()
 
     print('Training complete after {} episodes'.format(e))
     return exp_returns
@@ -110,7 +111,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     experience = ExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
-    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
+    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
     # Pre-load samples in experience replay.
@@ -132,7 +133,7 @@ def dqn_with_prioritized_experience(env, n_episodes=None):
                                              alpha_sched=alpha_sched, beta_sched=beta_sched)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
-    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True)
+    fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
 
     # Pre-load samples in experience replay.
@@ -232,7 +233,7 @@ def solve():
     n_episodes = []
 
     for i in range(1):
-        returns = dqn_with_fixed_targets(env, n_episodes=None)
+        returns = dqn_with_prioritized_experience(env, n_episodes=None)
         n_episodes.append(len(returns))
 
     n_episodes = np.array(n_episodes)
@@ -249,7 +250,7 @@ def main():
     if len(sys.argv) > 1:
         arg = sys.argv[1]
     else:
-        arg = 'solve'
+        arg = 'single'
 
     if arg == 'multiple':
         run_multiple_trials()
