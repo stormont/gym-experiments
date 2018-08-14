@@ -21,7 +21,7 @@ class ExperienceReplay:
     def supports_prioritization(self):
         return False
 
-    def add(self, state, action, reward, next_state, done, priority=None):
+    def add(self, state, action, reward, next_state, done):
         self._states.append(state)
         self._actions.append(action)
         self._rewards.append(reward)
@@ -63,10 +63,10 @@ class ExperienceReplay:
 
 
 class PrioritizedExperienceReplay(ExperienceReplay):
-    def __init__(self, maxlen, sample_batch_size, min_size_to_sample, e=0.000001, alpha_sched=None, beta_sched=None):
+    def __init__(self, maxlen, sample_batch_size, min_size_to_sample, e=1.0, alpha_sched=None, beta_sched=None):
         super(PrioritizedExperienceReplay, self).__init__(maxlen, sample_batch_size, min_size_to_sample)
         self._priorities = deque(maxlen=maxlen)
-        self._e = e
+        self._e = abs(e)
         self._alpha_sched = alpha_sched
         self._beta_sched = beta_sched
 
@@ -74,9 +74,8 @@ class PrioritizedExperienceReplay(ExperienceReplay):
     def supports_prioritization(self):
         return True
 
-    def add(self, state, action, reward, next_state, done, priority=0.0):
-        alpha = 1.0 if self._alpha_sched is None else self._alpha_sched.value
-        priority = abs(priority) ** alpha + self._e
+    def add(self, state, action, reward, next_state, done):
+        priority = self._priorities.max() if self.__len__() > 0 else self._e
 
         if self.__len__() < self._states.maxlen:
             # Just append to the end
@@ -97,11 +96,12 @@ class PrioritizedExperienceReplay(ExperienceReplay):
             self._priorities[min_idx] = priority
 
     def sample(self):
-        num_samples = self.__len__()
-        dist = np.array(list(self._priorities))
-        sum_priorities = dist.sum()
+        alpha = 1.0 if self._alpha_sched is None else self._alpha_sched.value
+        dist = np.array(list(self._priorities)) ** alpha
+        dist /= dist.sum()  # Normalize distribution
+
         beta = 1.0 if self._beta_sched is None else self._beta_sched.value
-        dist /= sum_priorities  # Normalize distribution
+        num_samples = self.__len__()
 
         indices = np.random.choice(range(num_samples), self._sample_batch_size, p=dist)
         states = np.array([self._states[idx] for idx in indices])
@@ -109,7 +109,8 @@ class PrioritizedExperienceReplay(ExperienceReplay):
         rewards = np.array([self._rewards[idx] for idx in indices])
         next_states = np.array([self._next_states[idx] for idx in indices])
         dones = np.array([self._dones[idx] for idx in indices])
-        importances = np.array([(1. / (num_samples * dist[idx])) ** beta for idx in indices])
+        importances = np.array((1. / (num_samples * dist)) ** beta)
+        importances /= importances.max()  # TODO: Should this be a .sum()?
 
         return states, actions, rewards, next_states, dones, importances, indices
 
@@ -121,5 +122,4 @@ class PrioritizedExperienceReplay(ExperienceReplay):
             self._beta_sched.step()
 
     def update_priority(self, idx, priority):
-        alpha = 1.0 if self._alpha_sched is None else self._alpha_sched.value
-        self._priorities[idx] = abs(priority) ** alpha + self._e
+        self._priorities[idx] = abs(priority)
