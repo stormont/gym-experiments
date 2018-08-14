@@ -237,7 +237,7 @@ def solve():
         n_episodes.append(len(returns))
 
     n_episodes = np.array(n_episodes)
-    print('MountainCar solved!')
+    print('LunarLander solved!')
     print('  Median: {} episodes'.format(np.median(n_episodes)))
     print('  Mean:   {} episodes'.format(np.mean(n_episodes)))
     print('  Std:    {} episodes'.format(np.std(n_episodes)))
