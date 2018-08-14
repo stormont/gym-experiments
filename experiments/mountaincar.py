@@ -61,10 +61,11 @@ def train_dqn(agent, n_episodes=None, debug=False):
             # MountainCar-v0 defines "solving" as getting average reward of -110.0 over 100 consecutive trials.
             training_complete = np.mean(exp_returns[-100:]) >= -110.0
 
-    plt.plot(exp_returns, color='b', label='Rewards')
-    plt.plot(action_vals, color='r', label='Q-value')
-    plt.legend(loc='upper left')
-    plt.show()
+    if debug:
+        plt.plot(exp_returns, color='b', label='Rewards')
+        plt.plot(action_vals, color='r', label='Q-value')
+        plt.legend(loc='upper left')
+        plt.show()
 
     print('Training complete after {} episodes'.format(e))
     return exp_returns

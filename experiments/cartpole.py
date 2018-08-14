@@ -63,10 +63,11 @@ def train_dqn(agent, n_episodes=None, debug=False):
 
     print('Training complete after {} episodes'.format(e))
 
-    plt.plot(exp_returns, color='b', label='Rewards')
-    plt.plot(action_vals, color='r', label='Q-value')
-    plt.legend(loc='upper left')
-    plt.show()
+    if debug:
+        plt.plot(exp_returns, color='b', label='Rewards')
+        plt.plot(action_vals, color='r', label='Q-value')
+        plt.legend(loc='upper left')
+        plt.show()
 
     if n_episodes is None:
         step_rewards, n_steps = agent.test(render=True, verbose=1)
