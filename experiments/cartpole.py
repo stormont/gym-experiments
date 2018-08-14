@@ -152,7 +152,7 @@ def run_single_trials():
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
                  (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
-                 (baseline_returns, 'r', 'Baseline')], title='4 DQN Variants')
+                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants')
 
 
 def run_multiple_trials():
@@ -195,7 +195,7 @@ def run_multiple_trials():
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
                  (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
-                 (baseline_returns, 'r', 'Baseline')], title='4 DQN Variants')
+                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants')
 
 
 def solve():
@@ -205,6 +205,11 @@ def solve():
     for i in range(10):
         returns = dqn_with_fixed_targets(env, n_episodes=None)
         n_episodes.append(len(returns))
+
+        if i == 0:
+            baseline_returns = data_exploration(env, n_episodes=len(n_episodes))
+            data.report([(returns, 'b', 'Solution'),
+                         (baseline_returns, 'r', 'Baseline')], title='Solution')
 
     n_episodes = np.array(n_episodes)
     print('CartPole solved!')

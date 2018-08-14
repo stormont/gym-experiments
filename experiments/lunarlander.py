@@ -173,7 +173,7 @@ def run_single_trials():
                  (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (dqn_w_per_returns, 'c', 'DQN w/ PER'),
-                 (baseline_returns, 'r', 'Baseline')], title='4 DQN Variants')
+                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants')
 
 
 def run_multiple_trials():
@@ -225,7 +225,7 @@ def run_multiple_trials():
                  (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (dqn_w_per_returns, 'c', 'DQN w/ PER'),
-                 (baseline_returns, 'r', 'Baseline')], title='4 DQN Variants')
+                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants')
 
 
 def solve():
@@ -235,6 +235,11 @@ def solve():
     for i in range(1):
         returns = dqn_with_prioritized_experience(env, n_episodes=None)
         n_episodes.append(len(returns))
+
+        if i == 0:
+            baseline_returns = data_exploration(env, n_episodes=len(n_episodes))
+            data.report([(returns, 'b', 'Solution'),
+                         (baseline_returns, 'r', 'Baseline')], title='Solution')
 
     n_episodes = np.array(n_episodes)
     print('LunarLander solved!')
