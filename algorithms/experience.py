@@ -69,14 +69,13 @@ class PrioritizedExperienceReplay(ExperienceReplay):
         self._e = abs(e)
         self._alpha_sched = alpha_sched
         self._beta_sched = beta_sched
+        self._max_priority = self._e
 
     @property
     def supports_prioritization(self):
         return True
 
     def add(self, state, action, reward, next_state, done):
-        priority = self._priorities.max() if self.__len__() > 0 else self._e
-
         if self.__len__() < self._states.maxlen:
             # Just append to the end
             self._states.append(state)
@@ -84,7 +83,7 @@ class PrioritizedExperienceReplay(ExperienceReplay):
             self._rewards.append(reward)
             self._next_states.append(next_state)
             self._dones.append(done)
-            self._priorities.append(priority)
+            self._priorities.append(self._max_priority)
         else:
             # Replace the smallest existing priority
             min_idx = np.argmin(self._priorities)
@@ -93,7 +92,7 @@ class PrioritizedExperienceReplay(ExperienceReplay):
             self._rewards[min_idx] = reward
             self._next_states[min_idx] = next_state
             self._dones[min_idx] = done
-            self._priorities[min_idx] = priority
+            self._priorities[min_idx] = self._max_priority
 
     def sample(self):
         alpha = 1.0 if self._alpha_sched is None else self._alpha_sched.value
@@ -109,7 +108,7 @@ class PrioritizedExperienceReplay(ExperienceReplay):
         rewards = np.array([self._rewards[idx] for idx in indices])
         next_states = np.array([self._next_states[idx] for idx in indices])
         dones = np.array([self._dones[idx] for idx in indices])
-        importances = np.array((1. / (num_samples * dist)) ** beta)
+        importances = np.array((1. / (num_samples * dist[indices])) ** beta)
         importances /= importances.max()  # TODO: Should this be a .sum()?
 
         return states, actions, rewards, next_states, dones, importances, indices
@@ -123,3 +122,4 @@ class PrioritizedExperienceReplay(ExperienceReplay):
 
     def update_priority(self, idx, priority):
         self._priorities[idx] = abs(priority)
+        self._max_priority = max(abs(priority), self._e)
