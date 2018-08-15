@@ -124,11 +124,13 @@ def dqn_with_fixed_targets(env, n_episodes=None):
 
 
 def dqn_with_prioritized_experience(env, n_episodes=None):
-    # DQN with e-greedy exploration, experience replay, and fixed-Q targets
+    # DQN with e-greedy exploration, prioritized experience replay, and fixed-Q targets
+    sched_step = 1.0 / n_episodes if n_episodes is not None else 0.001
+
     model = build_network(env)
     target_model = build_network(env)
-    alpha_sched = LinearSchedule(start=0.0, end=1.0, step=0.001)
-    beta_sched = LinearSchedule(start=0.0, end=1.0, step=0.001)
+    alpha_sched = LinearSchedule(start=0.0, end=1.0, step=sched_step)
+    beta_sched = LinearSchedule(start=0.0, end=1.0, step=sched_step)
     experience = PrioritizedExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000,
                                              alpha_sched=alpha_sched, beta_sched=beta_sched)
     decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)

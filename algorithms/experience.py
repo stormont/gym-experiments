@@ -108,8 +108,8 @@ class PrioritizedExperienceReplay(ExperienceReplay):
         rewards = np.array([self._rewards[idx] for idx in indices])
         next_states = np.array([self._next_states[idx] for idx in indices])
         dones = np.array([self._dones[idx] for idx in indices])
-        importances = np.array((1. / (num_samples * dist[indices])) ** beta)
-        importances /= importances.max()  # TODO: Should this be a .sum()?
+        importances = np.array((num_samples * dist[indices]) ** beta)
+        importances /= importances.max()
 
         return states, actions, rewards, next_states, dones, importances, indices
 
@@ -122,4 +122,4 @@ class PrioritizedExperienceReplay(ExperienceReplay):
 
     def update_priority(self, idx, priority):
         self._priorities[idx] = abs(priority)
-        self._max_priority = max(abs(priority), self._e)
+        self._max_priority = max(self._priorities)
