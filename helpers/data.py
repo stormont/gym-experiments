@@ -1,6 +1,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 def _smooth_returns(returns, window=10):
@@ -72,7 +73,10 @@ def report(returns, render=True, title=None, legend_loc='upper right', smooth_wi
     plt.ylabel('Reward')
 
     if file is not None:
-        plt.savefig(file)
+        if not os.path.exists('logs'):
+            os.makedirs('logs')
+
+        plt.savefig(os.path.join('logs', file))
 
     plt.show()
 
