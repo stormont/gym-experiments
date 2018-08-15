@@ -108,6 +108,9 @@ class PrioritizedExperienceReplay(ExperienceReplay):
         rewards = np.array([self._rewards[idx] for idx in indices])
         next_states = np.array([self._next_states[idx] for idx in indices])
         dones = np.array([self._dones[idx] for idx in indices])
+
+        # IMPORTANT! The `beta` exponent must be positive to yield the correct results!
+        # This conflicts with the algorithm first presented by [Schaul15].
         importances = np.array((num_samples * dist[indices]) ** beta)
         importances /= importances.max()
 
