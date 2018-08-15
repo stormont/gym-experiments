@@ -63,11 +63,11 @@ def train_dqn(agent, n_episodes=None, debug=False):
         else:
             exp_time_remaining = (max_episodes - e) * avg_time
 
-        print('Episode {} - mean {} steps in {} seconds with {} reward; epsilon now {}; {}s estimated max time remaining'.format(
+        print('\rEpisode {} - mean {:.0f} steps in {:.2f} seconds with {:.2f} reward; epsilon now {:.4f}; {:.2f}s estimated max time remaining'.format(
             e, np.mean(list(steps)), avg_time, np.mean(exp_returns[-100:]), agent.exploration.epsilon, exp_time_remaining),
-              end='')
+            end='')
 
-        if e % 100 == 0:
+        if e % 25 == 0:
             print()
 
         if n_episodes is not None:
@@ -106,7 +106,7 @@ def dqn_with_experience(env, n_episodes):
     # DQN with e-greedy exploration and experience replay
     model = build_network(env)
     experience = ExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience)
 
@@ -124,7 +124,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     model = build_network(env)
     target_model = build_network(env)
     experience = ExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
@@ -148,7 +148,7 @@ def dqn_with_prioritized_experience(env, n_episodes=None):
     beta_sched = LinearSchedule(start=0.0, end=1.0, step=sched_step)
     experience = PrioritizedExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000,
                                              alpha_sched=alpha_sched, beta_sched=beta_sched)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
@@ -256,7 +256,7 @@ def solve():
         if i == 0:
             baseline_returns = data_exploration(env, n_episodes=len(n_episodes))
             data.report([(returns, 'b', 'Solution'),
-                         (baseline_returns, 'r', 'Baseline')], title='Solution', file='lunarlander_solve_per_dqn.png')
+                         (baseline_returns, 'r', 'Baseline')], title='Solution', file='lunarlander_solve_dqn.png')
 
     n_episodes = np.array(n_episodes)
     print('LunarLander solved!')
