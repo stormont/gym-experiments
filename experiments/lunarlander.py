@@ -5,6 +5,7 @@ from algorithms.experience import ExperienceReplay, PrioritizedExperienceReplay
 from algorithms.fixed_q_target import FixedQTarget
 from algorithms.loss import huber_loss
 from algorithms.schedule import ExponentialSchedule, LinearSchedule
+from collections import deque
 import gym
 from helpers import data
 from helpers.env_wrapper import EnvironmentWrapper
@@ -32,11 +33,15 @@ def build_network(env, verbose=True):
 
 def train_dqn(agent, n_episodes=None, debug=False):
     # Experiment described by: https://gym.openai.com/envs/LunarLander-v2/
-    # MountainCar-v0 defines "solving" as getting average reward of 200.0 over 100 consecutive trials.
-    exp_returns = []
-    training_complete = False
+    # LunarLander-v2 defines "solving" as getting average reward of 200.0 over 100 consecutive trials
+    solution_score = 200.0
+    max_episodes = 2000  # Arbitrary maximum at 2000 episodes, in case of divergent training
     e = 0
     action_vals = []
+    exp_returns = []
+    elapsed_times = deque(maxlen=100)
+    steps = deque(maxlen=100)
+    training_complete = False
 
     def debug_func(model):
         # Just an arbitrary first state/action pair from a new episode of a fully trained model
@@ -45,20 +50,30 @@ def train_dqn(agent, n_episodes=None, debug=False):
         x = model.predict(state)[0][action]
         action_vals.append(x)
 
-    # Arbitrary maximum at 2000 episodes, in case of divergent training
-    while not training_complete and e < 2000:
+    while not training_complete and e < max_episodes:
         e += 1
         total_reward, n_steps, elapsed_time, ep_reward_est_max, ep_loss_max = agent.train(debug_func=debug_func if debug else None)
         exp_returns.append(total_reward)
+        elapsed_times.append(elapsed_time)
+        steps.append(n_steps)
+        avg_time = np.mean(list(elapsed_times))
 
-        print('Episode {} took {} steps and got {} reward in {} seconds; mean reward {}; epsilon now {}'.format(
-            e, n_steps, total_reward, elapsed_time, np.mean(exp_returns[-100:]), agent.exploration.epsilon))
+        if n_episodes is not None:
+            exp_time_remaining = (n_episodes - e) * avg_time
+        else:
+            exp_time_remaining = (max_episodes - e) * avg_time
+
+        print('Episode {} - mean {} steps in {} seconds with {} reward; epsilon now {}; {}s estimated max time remaining'.format(
+            e, np.mean(list(steps)), avg_time, np.mean(exp_returns[-100:]), agent.exploration.epsilon, exp_time_remaining),
+              end='')
+
+        if e % 100 == 0:
+            print()
 
         if n_episodes is not None:
             training_complete = e == n_episodes
         else:
-            # MountainCar-v0 defines "solving" as getting average reward of 200.0 over 100 consecutive trials.
-            training_complete = np.mean(exp_returns[-100:]) >= 200
+            training_complete = np.mean(exp_returns[-100:]) >= solution_score
 
     if debug:
         plt.plot(exp_returns, color='b', label='Rewards')
@@ -79,7 +94,7 @@ def data_exploration(env, n_episodes):
 def basic_dqn(env, n_episodes):
     # Basic DQN with e-greedy exploration
     model = build_network(env)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration)
 
@@ -91,7 +106,7 @@ def dqn_with_experience(env, n_episodes):
     # DQN with e-greedy exploration and experience replay
     model = build_network(env)
     experience = ExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience)
 
@@ -109,7 +124,7 @@ def dqn_with_fixed_targets(env, n_episodes=None):
     model = build_network(env)
     target_model = build_network(env)
     experience = ExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
@@ -133,7 +148,7 @@ def dqn_with_prioritized_experience(env, n_episodes=None):
     beta_sched = LinearSchedule(start=0.0, end=1.0, step=sched_step)
     experience = PrioritizedExperienceReplay(maxlen=10000, sample_batch_size=64, min_size_to_sample=1000,
                                              alpha_sched=alpha_sched, beta_sched=beta_sched)
-    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.995)
+    decay_sched = ExponentialSchedule(start=1.0, end=0.01, step=0.99)
     exploration = EpsilonGreedyExploration(decay_sched=decay_sched)
     fixed_target = FixedQTarget(target_model, target_update_step=500, use_soft_targets=True, use_double_q=True)
     agent = DQNAgent(env, model, gamma=0.99, exploration=exploration, experience=experience, fixed_q_target=fixed_target)
