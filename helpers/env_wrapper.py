@@ -4,28 +4,30 @@ import random
 
 
 class EnvironmentWrapper:
-    def __init__(self, env, n_bootstrap_episodes=10000, verbose=1):
+    def __init__(self, env, n_bootstrap_steps=10000, verbose=1):
         self._env = env
         self._n_samples = 0
         self._mean = None
         self._std = None
         self._verbose = verbose
 
-        if n_bootstrap_episodes is not None:
-            self._bootstrap(n_bootstrap_episodes)
+        if n_bootstrap_steps is not None:
+            self._bootstrap(n_bootstrap_steps)
 
-    def _bootstrap(self, n_bootstrap_episodes):
+    def _bootstrap(self, n_bootstrap_steps):
         self._mean = None
         self._std = None
+        steps = 0
 
         if self._verbose > 0:
-            print('Bootstrapping environment stats over {} random episodes...'.format(n_bootstrap_episodes))
+            print('Bootstrapping environment stats over {} random time steps...'.format(n_bootstrap_steps))
 
-        for _ in range(n_bootstrap_episodes):
+        while steps < n_bootstrap_steps:
             done = False
             _ = self.reset()
 
             while not done:
+                steps += 1
                 action = random.randrange(self._env.action_space.n)
                 _, _, done, _ = self.step(action)
 
