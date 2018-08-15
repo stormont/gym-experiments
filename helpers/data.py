@@ -44,7 +44,7 @@ def random(env, n_episodes=1000):
     return returns
 
 
-def report(returns, render=True, title=None, legend_loc='upper right', smooth_window=10):
+def report(returns, render=True, title=None, legend_loc='upper right', smooth_window=10, file=None):
     for i in range(len(returns)):
         series, color, label = returns[i]
 
@@ -70,5 +70,9 @@ def report(returns, render=True, title=None, legend_loc='upper right', smooth_wi
     plt.legend(loc=legend_loc)
     plt.xlabel('Episode')
     plt.ylabel('Reward')
+
+    if file is not None:
+        plt.savefig(file)
+
     plt.show()
 

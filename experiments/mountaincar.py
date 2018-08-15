@@ -151,30 +151,30 @@ def run_single_trials():
     n_episodes = 500
 
     baseline_returns = data_exploration(env, n_episodes)
-    data.report([(baseline_returns, 'b', 'Baseline')], title='Random Walk')
+    data.report([(baseline_returns, 'b', 'Baseline')], title='Random Walk', file='mountaincar_single_random_walk.png')
 
     basic_dqn_returns = basic_dqn(env, n_episodes)
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
-                 (baseline_returns, 'r', 'Baseline')], title='Vanilla DQN')
+                 (baseline_returns, 'r', 'Baseline')], title='Vanilla DQN', file='mountaincar_single_basic_dqn.png')
 
     dqn_w_exp_returns = dqn_with_experience(env, n_episodes)
     data.report([(dqn_w_exp_returns, 'b', 'DQN w/ ER'),
-                 (baseline_returns, 'r', 'Baseline')], title='Experience Replay')
+                 (baseline_returns, 'r', 'Baseline')], title='Experience Replay', file='mountaincar_single_er_dqn.png')
 
     dqn_w_fixed_targets_returns = dqn_with_fixed_targets(env, n_episodes)
     data.report([(dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
-                 (baseline_returns, 'r', 'Baseline')], title='Fixed-Q Targets')
+                 (baseline_returns, 'r', 'Baseline')], title='Fixed-Q Targets', file='mountaincar_single_fixedq_dqn.png')
 
     dqn_w_per_returns = dqn_with_prioritized_experience(env, n_episodes)
     data.report([(dqn_w_per_returns, 'b', 'DQN w/ PER'),
-                 (baseline_returns, 'r', 'Baseline')], title='Prioritized ER')
+                 (baseline_returns, 'r', 'Baseline')], title='Prioritized ER', file='mountaincar_single_per_dqn.png')
 
     # Plot all the variations
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
                  (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (dqn_w_per_returns, 'c', 'DQN w/ PER'),
-                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants')
+                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants', file='mountaincar_single_all_dqn.png')
 
 
 def run_multiple_trials():
@@ -187,7 +187,7 @@ def run_multiple_trials():
     for i in range(n_trials):
         baseline_returns.append(data_exploration(env, n_episodes))
 
-    data.report([(baseline_returns, 'b', 'Baseline')], title='Random Walk')
+    data.report([(baseline_returns, 'b', 'Baseline')], title='Random Walk', file='mountaincar_multi_random_walk.png')
 
     basic_dqn_returns = []
 
@@ -195,7 +195,7 @@ def run_multiple_trials():
         basic_dqn_returns.append(basic_dqn(env, n_episodes))
 
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
-                 (baseline_returns, 'r', 'Baseline')], title='Vanilla DQN')
+                 (baseline_returns, 'r', 'Baseline')], title='Vanilla DQN', file='mountaincar_multi_basic_dqn.png')
 
     dqn_w_exp_returns = []
 
@@ -203,7 +203,7 @@ def run_multiple_trials():
         dqn_w_exp_returns.append(dqn_with_experience(env, n_episodes))
 
     data.report([(dqn_w_exp_returns, 'b', 'DQN w/ ER'),
-                 (baseline_returns, 'r', 'Baseline')], title='Experience Replay')
+                 (baseline_returns, 'r', 'Baseline')], title='Experience Replay', file='mountaincar_multi_er_dqn.png')
 
     dqn_w_fixed_targets_returns = []
 
@@ -211,7 +211,7 @@ def run_multiple_trials():
         dqn_w_fixed_targets_returns.append(dqn_with_fixed_targets(env, n_episodes))
 
     data.report([(dqn_w_fixed_targets_returns, 'b', 'DQN w/ Fixed-Q'),
-                 (baseline_returns, 'r', 'Baseline')], title='Fixed-Q Targets')
+                 (baseline_returns, 'r', 'Baseline')], title='Fixed-Q Targets', file='mountaincar_multi_fixedq_dqn.png')
 
     dqn_w_per_returns = []
 
@@ -219,14 +219,14 @@ def run_multiple_trials():
         dqn_w_per_returns.append(dqn_with_prioritized_experience(env, n_episodes))
 
     data.report([(dqn_w_per_returns, 'b', 'DQN w/ PER'),
-                 (baseline_returns, 'r', 'Baseline')], title='Prioritized ER')
+                 (baseline_returns, 'r', 'Baseline')], title='Prioritized ER', file='mountaincar_multi_per_dqn.png')
 
     # Plot all the variations
     data.report([(basic_dqn_returns, 'b', 'Basic DQN'),
                  (dqn_w_exp_returns, 'g', 'DQN w/ ER'),
                  (dqn_w_fixed_targets_returns, 'm', 'DQN w/ Fixed-Q'),
                  (dqn_w_per_returns, 'c', 'DQN w/ PER'),
-                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants')
+                 (baseline_returns, 'r', 'Baseline')], title='All DQN Variants', file='mountaincar_multi_all_dqn.png')
 
 
 def solve():
@@ -240,7 +240,7 @@ def solve():
         if i == 0:
             baseline_returns = data_exploration(env, n_episodes=len(n_episodes))
             data.report([(returns, 'b', 'Solution'),
-                         (baseline_returns, 'r', 'Baseline')], title='Solution')
+                         (baseline_returns, 'r', 'Baseline')], title='Solution', file='mountaincar_solve_fixedq_dqn.png')
 
     n_episodes = np.array(n_episodes)
     print('MountainCar solved!')
